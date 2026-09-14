@@ -68,6 +68,7 @@ import {
   useListProcurementCenters,
   useUpdateQueueTokenStatus,
 } from "@/api-client";
+import { localApiRequest } from "@/data/demo-state";
 import type {
   ProcurementInputQualityGrade,
   QueueStatusInputStatus,
@@ -98,11 +99,6 @@ const queryClient = new QueryClient({
 });
 const DEMO_FARMER_ID = "farmer-001";
 const DEMO_CENTER_ID = "center-churu-01";
-const API_URL = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "") ?? "";
-
-function apiUrl(path: string) {
-  return `${API_URL}${path}`;
-}
 
 type Tone = "yellow" | "green" | "blue" | "red" | "ink";
 
@@ -454,7 +450,7 @@ function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!official && <LanguageSelector />}
+            <LanguageSelector />
             <button
               data-testid="button-notifications"
               aria-label={notificationPanelTitle}
@@ -650,7 +646,7 @@ function AppShell({ children }: { children: ReactNode }) {
 function FarmerChatbot() {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [chatLanguage, setChatLanguage] = useState<"en" | "hi" | "ta" | "pa">(
+  const [chatLanguage, setChatLanguage] = useState<"en" | "hi" | "te" | "pa">(
     "en",
   );
   const [chatSize, setChatSize] = useState<"small" | "full">("small");
@@ -698,7 +694,7 @@ function FarmerChatbot() {
           "कीपैड और वॉइस हेल्प पेज पर टोल-फ्री, कीपैड और वॉइस यात्रा के लिए जाएँ।",
       },
     },
-    ta: {
+    te: {
       intro:
         "வணக்கம்! ஸ்லாட், வரிசை, கட்டணம் மற்றும் மண்டி வழிகளுக்கு உதவ முடியும்.",
       selectLanguage: "மொழியைத் தேர்ந்தெடுக்கவும்",
@@ -850,7 +846,7 @@ function FarmerChatbot() {
                 data-testid="chatbot-language"
                 value={chatLanguage}
                 onChange={(e) =>
-                  setChatLanguage(e.target.value as "en" | "hi" | "ta" | "pa")
+                  setChatLanguage(e.target.value as "en" | "hi" | "te" | "pa")
                 }
                 className="ml-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-2 py-1 text-xs outline-none"
               >
@@ -1884,13 +1880,15 @@ function TokenPage() {
     if (!token?.id) return;
     setRescheduling(true);
     try {
-      const r = await fetch(apiUrl(`/api/queue/${token.id}/reschedule`), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason }),
-      });
-      if (!r.ok) throw new Error();
-      setRescheduled(await r.json());
+      const r = await localApiRequest<{ newSlot: any; reason?: string }>(
+        `/api/queue/${token.id}/reschedule`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
+        },
+      );
+      setRescheduled(r);
       setDelayed(false);
       await refetch();
     } finally {
@@ -2212,7 +2210,7 @@ function KeypadHelpPage() {
     [
       "2",
       "Select language",
-      "Press 1 for Hindi · 2 English · 3 Punjabi · 4 Tamil. The IVR continues all prompts and responses in that language.",
+      "Press 1 for Hindi · 2 English · 3 Punjabi · 4 Telugu. The IVR continues all prompts and responses in that language.",
     ],
     [
       "3",
@@ -2401,16 +2399,18 @@ function GateVerificationPage() {
     if (!token) return;
     setLocationState("checking");
     try {
-      const r = await fetch(apiUrl("/api/gate/verify"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tokenId: token.id,
-          latitude: lat,
-          longitude: lon,
-        }),
-      });
-      const x = await r.json();
+      const x = await localApiRequest<{ message: string; verified: boolean }>(
+        "/api/gate/verify",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tokenId: token.id,
+            latitude: lat,
+            longitude: lon,
+          }),
+        },
+      );
       setMessage(x.message || "");
       setLocationState(x.verified ? "allowed" : "blocked");
       if (x.verified) await refetch();
@@ -2848,7 +2848,7 @@ function OfficialQueue() {
   const reschedule = async (token: any) => {
     setWorkingId(token.id);
     try {
-      await fetch(apiUrl(`/api/queue/${token.id}/reschedule`), {
+      await localApiRequest(`/api/queue/${token.id}/reschedule`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: "Officer reschedule" }),
@@ -3088,24 +3088,22 @@ function OfficialScanPage() {
   const [token, setToken] = useState<any | null>(null);
   const [verified, setVerified] = useState(false);
   async function demoScan() {
-    const res = await fetch(apiUrl("/api/queue/token-104"));
-    if (res.ok) setToken(await res.json());
+    const res = await localApiRequest<any>("/api/queue/token-104");
+    setToken(res);
     setVerified(false);
   }
   async function confirm() {
     if (!token) return;
-    const res = await fetch(apiUrl("/api/official/checkin"), {
+    const res = await localApiRequest<any>("/api/official/checkin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tokenId: token.id }),
     });
-    if (res.ok) {
-      setVerified(true);
-      setToken(await res.json());
-      queryClient.invalidateQueries({
-        queryKey: getListCenterQueueQueryKey(DEMO_CENTER_ID),
-      });
-    }
+    setVerified(true);
+    setToken(res);
+    queryClient.invalidateQueries({
+      queryKey: getListCenterQueueQueryKey(DEMO_CENTER_ID),
+    });
   }
   return (
     <div className="animate-rise">

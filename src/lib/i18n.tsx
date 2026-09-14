@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type Language = "en" | "hi" | "ta" | "pa";
+export type Language = "en" | "hi" | "te" | "pa";
 
 export const languages: Array<{
   code: Language;
@@ -16,7 +16,7 @@ export const languages: Array<{
 }> = [
   { code: "en", label: "English", nativeLabel: "English" },
   { code: "hi", label: "Hindi", nativeLabel: "हिन्दी" },
-  { code: "ta", label: "Tamil", nativeLabel: "தமிழ்" },
+  { code: "te", label: "Telugu", nativeLabel: "తెలుగు" },
   { code: "pa", label: "Punjabi", nativeLabel: "ਪੰਜਾਬੀ" },
 ];
 
@@ -270,7 +270,7 @@ const messages: Record<Language, Messages> = {
     Help: "मदद",
   },
 
-  ta: {
+  te: {
     "Gate verified — entry allowed": "கேட் சரிபார்க்கப்பட்டது — நுழைவு அனுமதி",
     "Verify gate entry": "கேட் நுழைவை சரிபார்க்கவும்",
     "Simulate QR Scan": "QR ஸ்கேன் டெமோ",
@@ -635,7 +635,7 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = window.localStorage.getItem("fasalflux-language");
-    return stored === "hi" || stored === "ta" || stored === "pa"
+    return stored === "hi" || stored === "te" || stored === "pa"
       ? stored
       : "en";
   });
@@ -644,15 +644,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLanguageState(next);
     window.localStorage.setItem("fasalflux-language", next);
     document.documentElement.lang =
-      next === "hi" ? "hi" : next === "ta" ? "ta" : next === "pa" ? "pa" : "en";
+      next === "hi" ? "hi" : next === "te" ? "te" : next === "pa" ? "pa" : "en";
   };
 
   useEffect(() => {
     document.documentElement.lang =
       language === "hi"
         ? "hi"
-        : language === "ta"
-          ? "ta"
+        : language === "te"
+          ? "te"
           : language === "pa"
             ? "pa"
             : "en";
