@@ -347,11 +347,11 @@ function AppShell({ children }: { children: ReactNode }) {
           <FieldMark small />
           <div>
             <div className="font-display text-[30px] leading-none">
-              <span className="text-blue-800">FASAL</span>
-              <span className="text-green-600">FLUX</span>
+              <span className="text-white">FASAL</span>
+              <span className="text-yellow-400">FLUX</span>
             </div>
-            <div className="mt-1 text-[6px] font-bold uppercase tracking-[.18em] text-[hsl(var(--sidebar-foreground)/.6)]">
-              {t("------The Continuous Flow Of Crop------")}
+            <div className="mt-1 text-[6px] font-bold uppercase tracking-[.18em] text-gray-500 text-[hsl(var(--sidebar-foreground)/.6)]">
+              {t("  ------The Continuous Flow Of Crop------")}
             </div>
           </div>
         </div>
